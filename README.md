@@ -28,27 +28,7 @@ Welcome to my AI Engineering journey! This repository tracks my progress through
 ## 📁 Repository Structure
 
 ```
-.
-├── common/                   # Common utilities and reusable code
-│   ├── utils/                # Helper functions
-│   └── templates/            # Code and document templates
-├── docs/                     # Documentation and learning notes
-│   └── prompt_engineering/   # Prompt engineering patterns and learnings
-├── resources/                # Learning resources and references
-├── sprints/                  # Main work organized by sprints
-│   ├── sprint-1-llm-foundations/
-│   │   ├── week-1/           # GenAI Jumpstart
-│   │   ├── week-2/           # LLM App Basics
-│   │   └── week-3/           # RAG Implementation
-│   ├── sprint-2-agents/
-│   │   ├── week-4/           # LLM Agents & Tool Use
-│   │   └── week-5/           # Multi-Agent Systems
-│   ├── sprint-3-llmops/
-│   │   ├── week-6/           # Monitoring & Guardrails
-│   │   └── week-7/           # Deployment & CI/CD
-│   └── sprint-4-capstone/
-│       └── week-8/           # Final Project
-└── .env.template             # Template for environment variables
+
 ```
 
 ## 🛠️ Key Technologies

@@ -1,3 +1,4 @@
+from llama_index.core import Document
 from fastapi import APIRouter, UploadFile, HTTPException, File, BackgroundTasks
 from pydantic import BaseModel
 from typing import List, Optional
@@ -6,8 +7,10 @@ import shutil
 import os
 
 from rag.document_processor import process_document
-from rag.vector_store import get_vector_store, add_documents, delete_document, search_documents, list_all_documents
-from rag.llm import generate_response
+from rag.vector_store import  add_documents, delete_document, search_documents, list_all_documents
+from rag.llm import generate_response,summarize_passage
+from rag.utils.embedding_io import save_vectors
+from rag.utils.visualization import visualize_vectors
 
 router = APIRouter()
 
@@ -17,6 +20,7 @@ processing_tasks = {}
 class QueryRequest(BaseModel):
     query: str
     top_k: int = 5
+    summarize: bool = False
 
 class Source(BaseModel):
     document_name: str
@@ -62,14 +66,20 @@ async def upload_file(
 
 async def process_and_index_document(doc_id: str, file_path: str, file_name: str):
     try:
-        documents, num_pages = await process_document(file_path, doc_id, file_name)
+        documents, num_pages, vectors = await process_document(file_path, doc_id, file_name)
+        
+        save_vectors(vectors, f"data/vectors/{doc_id}.json")
+
         add_documents(documents)
+
+        visualize_vectors(vectors)
+
         processing_tasks[doc_id] = {
             "status": "completed",
             "name": file_name,
             "pages": num_pages
         }
-        print(f"Document {file_name} processed: {len(documents)} chunks created")
+
     except Exception as e:
         processing_tasks[doc_id] = {"status": "failed", "error": str(e)}
         print(f"Error processing {file_name}: {str(e)}")
@@ -120,29 +130,44 @@ async def list_documents():
 
     return list(doc_map.values())
 
+MAX_SOURCE_CHARS = 300
 
 @router.post("/query", response_model=QueryResponse)
 async def query_documents(request: QueryRequest):
     try:
         results = search_documents(request.query, request.top_k)
+
         if not results:
             return QueryResponse(
                 response="No relevant information found. Try another query or upload more documents.",
                 sources=[]
             )
-        
-        response = await generate_response(request.query, results)
+
+        # Hybrid summarization logic
+        processed_context = []
+        for doc, score in results:
+            content = doc.get_content()
+
+            if request.summarize and len(content) > 1000:
+                summary = await summarize_passage(content, request.query)
+                new_doc = Document(text=summary, metadata=doc.metadata)
+                processed_context.append((new_doc, score))
+            else:
+                processed_context.append((doc, score))
+
+        response_text = await generate_response(request.query, processed_context)
+
         sources = [
             Source(
                 document_name=doc.metadata.get("file_name", "Unknown Document"),
                 page_number=doc.metadata.get("page_number"),
-                text=doc.get_content(),
+                text=(doc.get_content()[:MAX_SOURCE_CHARS] + "...") if doc.get_content() else "",
                 score=score
             )
             for doc, score in results
         ]
-        
-        return QueryResponse(response=response, sources=sources)
-    
+
+        return QueryResponse(response=response_text, sources=sources)
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Query error: {str(e)}")

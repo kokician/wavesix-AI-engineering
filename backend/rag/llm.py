@@ -20,8 +20,8 @@ async def generate_response(query: str, context: List[Tuple[Document, float]]) -
     sorted_context = sorted(context, key=lambda x: x[1], reverse=True)
 
     context_texts = [
-    f"Document: {doc.metadata.get('file_name', 'Unknown')}, Page: {doc.metadata.get('page_number', 'Unknown')}\n{doc.get_content()}\n\n"
-    for doc, _ in sorted_context
+        f"Document: {doc.metadata.get('file_name', 'Unknown')}, Page: {doc.metadata.get('page_number', 'Unknown')}\n{doc.get_content()}\n\n"
+        for doc, _ in sorted_context
     ]
 
     prompt = f"""You are a helpful assistant that answers questions based on the provided document context.
@@ -37,3 +37,14 @@ ANSWER:"""
 
     response = await Settings.llm.acomplete(prompt)
     return response.text
+
+
+async def summarize_passage(passage: str, query: str = "") -> str:
+    """Summarize a passage using the LLM, optionally conditioned on a query."""
+    if query:
+        prompt = f"You are helping answer the question: '{query}'.\nSummarize the following passage to help answer it:\n\n{passage}"
+    else:
+        prompt = f"Summarize the following passage in 2-3 sentences:\n\n{passage}"
+
+    response = await Settings.llm.acomplete(prompt)
+    return response.text.strip()
