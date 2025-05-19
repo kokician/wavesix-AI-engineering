@@ -18,7 +18,7 @@ if st.button("Ask"):
     else:
         with st.spinner("Exploring the cosmos..."):
             try:
-                res = requests.post("http://localhost:8000/chat", json={"question": question})
+                res = requests.post("http://localhost:8080/chat", json={"question": question})
                 res.raise_for_status()
                 st.success(res.json()["answer"])
             except requests.exceptions.RequestException as e:
