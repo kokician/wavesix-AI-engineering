@@ -28,7 +28,9 @@ Welcome to my AI Engineering journey! This repository tracks my progress through
 ## 📁 Repository Structure
 
 ```
-
+-week1
+-week2
+-backend/week3
 ```
 
 ## 🛠️ Key Technologies
