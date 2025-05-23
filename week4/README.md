@@ -26,7 +26,8 @@ GitAgent-Lite is a single-agent system that uses the **ReAct pattern** and **Ope
 ---
 
 ##  Getting Started
-
+---
+```
 .
 ├── main.py                # CLI entrypoint
 ├── agent.py               # ReAct agent logic using OpenAI
@@ -34,4 +35,7 @@ GitAgent-Lite is a single-agent system that uses the **ReAct pattern** and **Ope
 ├── prompts/
 │   └── react_prompt.py    # ReAct prompt template
 ├── requirements.txt       # Python dependencies
-└── README.md              # You're reading this!
+└── README.md           
+
+```
+---

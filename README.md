@@ -25,13 +25,6 @@ Welcome to my AI Engineering journey! This repository tracks my progress through
 ### 🌐 Sprint 4: Capstone – End-to-End GenAI System (Week 8)
 - Final Project: A full-stack, production-ready, multi-agent GenAI system
 
-## 📁 Repository Structure
-
-```
--week1
--week2
--backend/week3
-```
 
 ## 🛠️ Key Technologies
 
