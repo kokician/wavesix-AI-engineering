@@ -27,7 +27,8 @@ GitAgent-Lite is a single-agent system that uses the **ReAct pattern** and **Ope
 
 ##  Getting Started
 ---
-.```
+```
+.
 ├── main.py                # CLI entrypoint
 ├──app.py                  # API interaction
 ├── agent
