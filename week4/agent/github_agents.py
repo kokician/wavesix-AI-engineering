@@ -41,11 +41,12 @@ def search_github_repos(query: str) -> str:
         return f"Error searching GitHub: {str(e)}"
 
 github_agent = Agent(
-    name="GitHub Repository Assistant",
+    name="GitHub Assistant",
     instructions="""
-    You help users search GitHub and analyze repositories. 
-    Use 'search_github_repos' for finding repositories, 
-    and 'analyze_repo' to extract install or usage info from READMEs.
+        You are a helpful GitHub agent.
+        Use tools to search GitHub and analyze READMEs for usage/install info.
     """,
+    model="gpt-4-turbo",
     tools=[analyze_repo, search_github_repos]
 )
+
