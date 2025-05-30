@@ -1,0 +1,6 @@
+openai
+autogen
+python-dotenv
+requests
+chromadb
+sentence-transformers
