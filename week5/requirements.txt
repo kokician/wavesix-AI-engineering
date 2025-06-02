@@ -1,6 +1,5 @@
+langchain
+chromadb
 openai
-autogen
 python-dotenv
 requests
-chromadb
-sentence-transformers

@@ -1,54 +1,67 @@
-import requests
-import json
-from agents import RepoAnalyzer, CriticAgent, FixerAgent, IssueAgent
 from dotenv import load_dotenv
+
+from memory import get_memory, save_context, get_memory_qa_chain
+from agents.issue_collector import IssueCollectorAgent
+from agents.content_summarizer import ContentSummarizerAgent
+from agents.quality_reviewer import QualityReviewerAgent
+from agents.markdown_formatter import MarkdownFormatterAgent
+
+from nl_to_repo import get_repo_url_from_nl
 
 load_dotenv()
 
-repo_analyzer = RepoAnalyzer("RepoAnalyzer")
-critic_agent = CriticAgent("CriticAgent")
-fixer_agent = FixerAgent("FixerAgent")
-issue_agent = IssueAgent("IssueAgent")
 
-GITHUB_SEARCH_API = "https://api.github.com/search/repositories"
+def run_pipeline(repo_url: str):
+    memory = get_memory()
 
-def search_top_repos(query, top_n=3):
-    params = {
-        "q": query,
-        "sort": "stars",
-        "order": "desc",
-        "per_page": top_n
-    }
-    headers = {
-        "Accept": "application/vnd.github.v3+json"
-    }
-    response = requests.get(GITHUB_SEARCH_API, params=params, headers=headers)
-    if response.status_code != 200:
-        raise Exception(f"GitHub search failed: {response.text}")
-    items = response.json().get("items", [])
-    return [item["html_url"] for item in items]
+    issues = IssueCollectorAgent(repo_url, memory).run()
+    summaries = ContentSummarizerAgent(memory).run(issues)
+    refined = QualityReviewerAgent(memory).run(summaries)
+    markdown = MarkdownFormatterAgent(memory).run(refined)
 
-def main():
-    user_query = input("Enter a topic to search GitHub repos (e.g. 'data visualization'): ")
-    repo_urls = search_top_repos(user_query)
+    print("\n=== Release Notes ===\n")
+    print(markdown)
 
-    for idx, repo_url in enumerate(repo_urls, 1):
-        print(f"\n--- Processing Repo #{idx}: {repo_url} ---")
+    save_context(memory, "Final formatted notes", markdown)
 
-        analysis = repo_analyzer.analyze(repo_url)
-        if isinstance(analysis, str):
-            print(f"Analysis failed: {analysis}")
-            continue
 
-        issues = critic_agent.critique(repo_url, analysis)
-        print("Critique:", issues)
+def run_pipeline_with_natural_language():
+    query = input("Describe the Python library or repo you're interested in:\n> ")
+    repo_url = get_repo_url_from_nl(query)
+    if repo_url:
+        print(f"Identified repository: {repo_url}")
+        run_pipeline(repo_url)
+    else:
+        print("Sorry, couldn't find a matching repository.")
 
-        suggestions = fixer_agent.debate(repo_url, issues)
-        print("Suggestions:", suggestions)
 
-        formatted_issues = issue_agent.create_issues(analysis['repo'], issues, suggestions)
-        created = issue_agent.open_github_issues(formatted_issues)
-        print("Issue creation results:", created)
+def query_memory():
+    qa = get_memory_qa_chain()
+    while True:
+        q = input("\nAsk memory (or type 'exit'): ")
+        if q.lower() in ["exit", "quit"]:
+            break
+        try:
+            response = qa.invoke({"query": q})
+            print("Answer:", response['result']) 
+        except Exception as e:
+            print(f"Error: {e}")
+
 
 if __name__ == "__main__":
-    main()
+    print("1. Run release note generator with repository URL")
+    print("2. Run release note generator with natural language query")
+    print("3. Query memory")
+    print("4. Exit")
+
+    choice = input("\nChoose [1/2/3/4]: ").strip()
+
+    if choice == "1":
+        repo_url = input("\nEnter GitHub repo URL:\n> ").strip()
+        run_pipeline(repo_url)
+    elif choice == "2":
+        run_pipeline_with_natural_language()
+    elif choice == "3":
+        query_memory()
+    else:
+        print("Exiting.")
